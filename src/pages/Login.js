@@ -1,72 +1,67 @@
-import { ethers } from "ethers";
 import { useState } from "react";
-import { ADMIN_ADDRESS } from "../config";
+import { ethers } from "ethers";
 
-function Login({ setRole, setEnteredAddress }) {
-  const [loginId, setLoginId] = useState("");
-  const [message, setMessage] = useState("");
+function Login({ goAdmin, goUser }) {
+  const [inputAddress, setInputAddress] = useState("");
 
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      setMessage("MetaMask not installed");
-      return null;
-    }
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.send("eth_requestAccounts", []);
-    return accounts[0];
-  };
-
-  const login = async (type) => {
-    setMessage("");
-
-    if (!loginId) {
-      setMessage("Please enter Wallet ID");
-      return;
-    }
-
-    const connected = await connectWallet();
-    if (!connected) return;
-
-    if (connected.toLowerCase() !== loginId.toLowerCase()) {
-      setMessage("Entered ID and MetaMask wallet do not match");
-      return;
-    }
-
-    if (type === "admin") {
-      if (loginId.toLowerCase() !== ADMIN_ADDRESS.toLowerCase()) {
-        setMessage("Not an Admin wallet");
+  async function connectAndValidate(isAdmin) {
+    try {
+      if (!window.ethereum) {
+        alert("MetaMask not found");
         return;
       }
-      setRole("admin");
-    } else {
-      setRole("user");
-    }
 
-    setEnteredAddress(loginId);
-  };
+      if (!inputAddress) {
+        alert("Enter wallet address");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // 🔥 Ask MetaMask for account
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const metamaskAddress = accounts[0];
+
+      // 🔥 Compare addresses
+      if (
+        metamaskAddress.toLowerCase() !== inputAddress.toLowerCase()
+      ) {
+        alert("Entered address & MetaMask wallet do not match");
+        return;
+      }
+
+      // ✅ SUCCESS
+      if (isAdmin) {
+        goAdmin();
+      } else {
+        goUser(metamaskAddress);
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Login failed");
+    }
+  }
 
   return (
-  <div className="login-card">
-    <h1>Secure E-Voting</h1>
+    <div className="login-card">
+      <h2>Secure E-Voting</h2>
 
-    <input
-      placeholder="Wallet Address"
-      value={loginId}
-      onChange={(e) => setLoginId(e.target.value)}
-    />
+      <input
+        placeholder="Wallet Address"
+        value={inputAddress}
+        onChange={(e) => setInputAddress(e.target.value)}
+      />
 
-    <button onClick={() => login("admin")}>
-      Admin Login
-    </button>
+      <button onClick={() => connectAndValidate(true)}>
+        Admin Login
+      </button>
 
-    <button onClick={() => login("user")}>
-      User Login
-    </button>
-
-    {message && <p className="error">{message}</p>}
-  </div>
-);
-
+      <button onClick={() => connectAndValidate(false)}>
+        User Login
+      </button>
+    </div>
+  );
 }
 
 export default Login;
