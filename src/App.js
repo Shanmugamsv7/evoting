@@ -2,13 +2,14 @@ import { useState } from "react";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import User from "./pages/User";
+import { ElectionProvider } from "./context/ElectionContext";
 
 function App() {
   const [page, setPage] = useState("login");
   const [userAddress, setUserAddress] = useState("");
 
   return (
-    <>
+    <ElectionProvider>
       {page === "login" && (
         <Login
           goAdmin={() => setPage("admin")}
@@ -29,7 +30,7 @@ function App() {
           onLogout={() => setPage("login")}
         />
       )}
-    </>
+    </ElectionProvider>
   );
 }
 
